@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "595ff7ecb994213d8b97eab816a3941a2b4a7eb4e05d4fea6424384192e79f01"
+            "sha256": "6f55aa2e5b116029f725035a3ed666f7c5ba5d5e539fe8e62e0d2e4ef8bb8713"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -27,6 +27,12 @@
         ]
     },
     "default": {
+        "langdetect": {
+            "hashes": [
+                "sha256:91a170d5f0ade380db809b3ba67f08e95fe6c6c8641f96d67a51ff7e98a9bf30"
+            ],
+            "version": "==1.0.7"
+        },
         "pyaes": {
             "hashes": [
                 "sha256:02c1b1405c38d3c370b085fb952dd8bea3fadcee6411ad99f312cc129c536d8f"
@@ -75,6 +81,13 @@
                 "sha256:25df4e10c263fb88b5ace923dd84bf9aa7f5019687b5e55382ffcdb8bede9db5"
             ],
             "version": "==3.4.2"
+        },
+        "six": {
+            "hashes": [
+                "sha256:832dc0e10feb1aa2c68dcc57dbb658f1c7e65b9b61af69048abc87a2db00a0eb",
+                "sha256:70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9"
+            ],
+            "version": "==1.11.0"
         },
         "telethon": {
             "hashes": [

@@ -1,11 +1,36 @@
 from os import environ
+from functools import reduce
 from telethon import TelegramClient, events
 from yaml import load, YAMLError
+from langdetect import detect
+import re
 
 import logging
 logging.basicConfig(level=logging.INFO)
 # logging.debug('dbg')
 logging.info('info')
+
+def filter_out(message):
+
+    patterns = [
+        't.me/joinchat'
+    ]
+
+    regexes = [ re.compile(pat, re.IGNORECASE) for pat in patterns ]
+
+    results = [ reg.search(message) for reg in regexes ]
+
+    is_filtered_out = reduce(lambda x, y: y if y else x, results)
+
+    if is_filtered_out:
+        return is_filtered_out
+
+    lang = detect(message)
+
+    if lang == 'ru':
+        return lang
+
+    return None
 
 def main():
 
@@ -48,6 +73,12 @@ def main():
     @client.on(events.NewMessage(chats=channel_ids))
     def new_message_handler(update):
         print(update.stringify())
+        message_string = update.message.message
+        print('main message: {}'.format(message_string))
+        filtered = filter_out(message_string)
+        if filtered:
+            print('filtered: {}'.format(filtered))
+            return
         client.forward_messages(target_channel, update.message)
 
     print('(Press Ctrl+C to stop this)')
