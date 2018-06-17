@@ -13,7 +13,9 @@ logging.info('info')
 def filter_out(message):
 
     patterns = [
-        't.me/joinchat'
+        't.me/joinchat',
+        't.me',
+        'join'
     ]
 
     regexes = [ re.compile(pat, re.IGNORECASE) for pat in patterns ]
@@ -25,12 +27,32 @@ def filter_out(message):
     if is_filtered_out:
         return is_filtered_out
 
-    lang = detect(message)
+    try:
+        lang = detect(message)
+    except lang_detect_exception.LangDetectException as exc:
+        print(exc)
 
     if lang == 'ru':
         return lang
 
     return None
+
+def filter_in(message):
+
+    patterns = [
+        'buy',
+        'entry',
+        'sell'
+    ]
+
+    regexes = [ re.compile(pat, re.IGNORECASE) for pat in patterns ]
+
+    results = [ reg.search(message) for reg in regexes ]
+
+    is_filtered_in = reduce(lambda x, y: y if y else x, results)
+
+    return is_filtered_in
+
 
 def main():
 
@@ -66,6 +88,9 @@ def main():
 
     target_channel = client.get_entity(channels['target'])
 
+    if channels['reject']:
+        reject_channel = client.get_entity(channels['reject'])
+
     print(channel_ids)
 
     print(target_channel.id)
@@ -79,7 +104,19 @@ def main():
         if filtered:
             print('filtered: {}'.format(filtered))
             return
-        client.forward_messages(target_channel, update.message)
+
+        forward = filter_in(message_string)
+        if forward:
+            client.forward_messages(target_channel, update.message)
+            client.send_message(target_channel, 'DEBUG: panjang pesan: {}'.format(len(message_string)))
+
+        else:
+            if reject_channel:
+                client.forward_messages(reject_channel, update.message)
+                debug_message = 'DEBUG: panjang pesan: {}'.format(len(message_string))
+                print(debug_message)
+                client.send_message(reject_channel, debug_message)
+        return
 
     print('(Press Ctrl+C to stop this)')
     client.idle()
