@@ -143,8 +143,7 @@ def main():
                 debug_message = 'DEBUG: panjang pesan: {}'.format(len(message_string))
                 print(debug_message)
                 client.send_message(reject_channel, debug_message)
-                if reject_reason:
-                    client.send_message(reject_channel, 'DEBUG: Reject reason: {}'.format(reject_reason))
+                client.send_message(reject_channel, 'DEBUG: Reject reason: no signal keywords')
         return
 
     print('(Press Ctrl+C to stop this)')
