@@ -23,7 +23,8 @@ def filter_out(message):
     patterns = [
         't.me/joinchat',
         't.me',
-        'join'
+        'join',
+        'V_ipman'
     ]
 
     regexes = [ re.compile(pat, re.IGNORECASE) for pat in patterns ]
