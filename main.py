@@ -1,10 +1,11 @@
 from os import environ
 from functools import reduce
-from telethon import TelegramClient, events
-from yaml import load, YAMLError
+from telethon import sync, TelegramClient, events
+from yaml import load, YAMLError, FullLoader
 from langdetect import detect, lang_detect_exception
 import re
-
+from datetime import datetime
+import pickle
 import logging
 logging.basicConfig(level=logging.INFO)
 # logging.debug('dbg')
@@ -70,12 +71,55 @@ def filter_in(message):
     return is_filtered_in
 
 
+def af_transform(msg, timestamp):
+    cmd = re.compile(r'^([A-Z]*) ((BUY|SELL) ?(LIMIT|STOP)?) ([\w\.]*)', re.MULTILINE)
+    cmt = cmd.search(msg)
+    # print(cmt.group(3))
+    if not cmt:
+        return None
+    if cmt.group(2) in ['BUY', 'SELL']:
+        op = 'OP_' + cmt.group(2)
+    else:
+        op = cmt.group(2).replace(' ', '')
+    
+    tpsl = re.compile(r'^TP ([\w\.]*) \| SL ([\w\.]*)', re.MULTILINE)
+    tmt = tpsl.search(msg)
+    # print(tmt.group(1), tmt.group(2))
+    if not tmt:
+        return None
+    
+    # print(timestamp.strftime('%d.%m.%Y.%H:%M'))
+    result = '${}#{}@{}SL{}TP{}ID{}\n'.format(
+        cmt.group(1),
+        op,
+        cmt.group(3),
+        tmt.group(2),
+        tmt.group(1),
+        timestamp.strftime('%d.%m.%Y.%H:%M')
+    )
+    actions = []
+    action_dict = {
+        'result_str': result,
+        'op': op,
+        'open': cmt.group(3),
+        'sl': tmt.group(2),
+        'tp': tmt.group(1),
+    }
+    actions.append(action_dict)
+    res_dict = {
+        'pair': cmt.group(1),
+        'id': timestamp.strftime('%d.%m.%Y.%H:%M'),
+        'actions': actions
+    }
+    return res_dict
+
+
 def main():
 
     # read channel config from channels.yml
     with open('channels.yml', 'r') as stream:
         try:
-            channels = load(stream)
+            channels = load(stream, Loader=FullLoader)
         except YAMLError as exc:
             print(exc)
             return
@@ -84,71 +128,154 @@ def main():
     client = TelegramClient(session_name,
                             int(environ['TG_API_ID']),
                             environ['TG_API_HASH'],
-                            proxy=None,
-                            update_workers=4,
-                            spawn_read_thread=False)
+                            proxy=None)
 
-    if 'TG_PHONE' in environ:
-        client.start(phone=environ['TG_PHONE'])
-    else:
-        client.start()
+    print('phone: {}', format(environ['TG_PHONE']))
+    # if 'TG_PHONE' in environ:
+    #     client.start(phone=environ['TG_PHONE'])
+    # else:
+    #     client.start()
+    with client:
 
-    print(channels)
-    source_channels = channels['source']
+        print(channels)
+        source_channels = channels['source']
 
-    def get_entity_id(url):
-        channel = client.get_entity(url)
-        return channel.id
+        def get_entity_id(url):
+            channel = client.get_entity(url)
+            return channel.id
 
-    channel_ids = list(map(get_entity_id, source_channels))
+        channel_ids = list(map(get_entity_id, source_channels))
 
-    target_channel = client.get_entity(channels['target'])
+        target_channel = client.get_entity(channels['target'])
 
-    if channels['reject']:
-        reject_channel = client.get_entity(channels['reject'])
+        if channels['reject']:
+            reject_channel = client.get_entity(channels['reject'])
+        else:
+            reject_channel = None
 
-    print(channel_ids)
+        print(channel_ids)
 
-    print(target_channel.id)
+        print(target_channel.id)
 
-    @client.on(events.NewMessage(chats=channel_ids))
-    def new_message_handler(update):
-        global reject_reason
-        reject_reason = ''
+        @client.on(events.NewMessage(chats=channel_ids))
+        async def new_message_handler(update):
+            global reject_reason
+            reject_reason = ''
 
-        print(update.stringify())
-        message_string = update.message.message
-        print('main message: {}'.format(message_string))
-        filtered = filter_out(message_string)
-        if filtered:
-            print('filtered: {}'.format(filtered))
-            if reject_channel:
-                client.forward_messages(reject_channel, update.message)
-                debug_message = 'DEBUG: panjang pesan: {}'.format(len(message_string))
-                print(debug_message)
-                client.send_message(reject_channel, debug_message)
-                print('reject_reason: {}'.format(reject_reason))
-                if reject_reason:
-                    client.send_message(reject_channel, 'DEBUG: Reject reason: {}'.format(reject_reason))
+            # to_id=PeerChannel(
+            #                        channel_id=1377311260
+            #                                        ),
+            print(update.message.to_id)
 
+            print(update.message.stringify())
+            message_string = update.message.message
+            print('main message: {}'.format(message_string))
+            print('channel_id: {}, author: {}'.format(update.message.to_id, update.message.post_author))
+
+            channel = None
+            try:
+                channel = await client.get_entity(update.message.to_id.channel_id)
+            except ValueError as err:
+                print(err)
+
+            if channel:
+                print(channel.title)
+            # filtered = filter_out(message_string)
+
+            filtered = False
+
+            if filtered:
+                print('filtered: {}'.format(filtered))
+                if reject_channel:
+                    client.forward_messages(reject_channel, update.message)
+                    debug_message = 'DEBUG: panjang pesan: {}'.format(len(message_string))
+                    print(debug_message)
+                    client.send_message(reject_channel, debug_message)
+                    print('reject_reason: {}'.format(reject_reason))
+                    if reject_reason:
+                        client.send_message(reject_channel, 'DEBUG: Reject reason: {}'.format(reject_reason))
+
+                return
+
+            # forward = filter_in(message_string)
+            forward = True if channel else False
+            if forward:
+                msg_obj = {}
+                with open('message.pickle', 'rb') as msgf:
+                    messages = pickle.load(msgf)
+                    print(messages)
+
+                if message_string:
+                    sent = None
+                    replied = None
+
+                    if update.message.reply_to_msg_id:
+                        replied = next((m for m in messages if m['channel_id'] == update.message.to_id.channel_id and
+                                       m['source_msg_id'] == update.message.reply_to_msg_id), None)
+                        if replied:
+                            print(replied)
+                            original_message = await client.get_messages(target_channel, ids=replied['msg_id'])
+
+                            if original_message:
+                                sent = await original_message.reply(message_string)
+                    if not sent:
+                        sent = await client.send_message(target_channel, message_string)
+
+                    print(sent.stringify())
+                        # $GBPUSD#OP_BUY@1.30505SL1.31005TP1.30205ID08.04.2019.18:26
+
+                    if update.message.to_id.channel_id == channel_ids[0]:
+                        # afinito
+                        af_res = None
+                        if replied:
+                            af_res = af_reply_transform(message_string, replied)
+                        else:
+                            af_res = af_transform(message_string, update.message.date)
+                        
+                        if af_res:
+                            with open('afinito.txt', 'a') as af:
+                                for action in af_res['actions']:
+                                    af.write(action.result_str)
+                                    
+                                msg_obj = af_res
+                        else:
+                            print('Error parsing\n{}'.format(message_string))
+
+                    msg_obj['msg_id'] = sent.id
+                    msg_obj['reply_to_msg_id'] = sent.reply_to_msg_id
+                    msg_obj['message_string'] = message_string
+
+                else:
+                    await client.forward_messages(target_channel, update.message)
+                    print(update.message.stringify())
+                    # client.send_message(target_channel, 'DEBUG: panjang pesan: {}'.format(len(message_string)))
+                    # save in general file for analysis:
+
+                with open('raw.txt', 'a') as raw_f:
+                    raw_f.write('{}\n{}\n'.format(channel.title, message_string))
+
+                msg_obj['channel'] = channel.title
+                msg_obj['channel_id'] = update.message.to_id.channel_id
+                msg_obj['source_msg_id'] = update.message.id
+                msg_obj['source_reply_to_msg_id'] = update.message.reply_to_msg_id
+                if update.message.media:
+                    msg_obj['media'] = update.message.media
+                msg_obj['date'] = update.message.date
+                messages.append(msg_obj)
+                with open('message.pickle', 'w+b') as msgf:
+                    print('dumping messages')
+                    pickle.dump(messages, msgf)
+            # else:
+            #     if reject_channel:
+            #         client.forward_messages(reject_channel, update.message)
+            #         debug_message = 'DEBUG: panjang pesan: {}'.format(len(message_string))
+            #         print(debug_message)
+            #         client.send_message(reject_channel, debug_message)
+            #         client.send_message(reject_channel, 'DEBUG: Reject reason: no signal keywords')
             return
 
-        forward = filter_in(message_string)
-        if forward:
-            client.forward_messages(target_channel, update.message)
-            # client.send_message(target_channel, 'DEBUG: panjang pesan: {}'.format(len(message_string)))
-
-        else:
-            if reject_channel:
-                client.forward_messages(reject_channel, update.message)
-                debug_message = 'DEBUG: panjang pesan: {}'.format(len(message_string))
-                print(debug_message)
-                client.send_message(reject_channel, debug_message)
-                client.send_message(reject_channel, 'DEBUG: Reject reason: no signal keywords')
-        return
-
-    print('(Press Ctrl+C to stop this)')
-    client.idle()
+        print('(Press Ctrl+C to stop this)')
+        await client.run_until_disconnected()
 
 if __name__ == '__main__':
     main()

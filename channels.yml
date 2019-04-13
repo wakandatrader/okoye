@@ -1,10 +1,14 @@
-target: t.me/okoyechannel
+target: 1165927082
 
 source:
-- https://t.me/joinchat/AAAAAE0-ahhMdcFnOJ5X1A # okoye private
-- https://t.me/piratesignal
-- t.me/intradaycointrad
-- t.me/supermaniac
-- t.me/PALMBEACHSIGNALS
+ - 1377311260
+ - 1203255423
+ - 1127406735
+# - https://t.me/piratesignal
+# - t.me/intradaycointrad
+# - t.me/PALMBEACHSIGNALS
+# - 1372313465
+ # Okoye Private:
+ - 1295936024
 
-reject: t.me/okoyereject
+reject: 
