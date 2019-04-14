@@ -1,0 +1,50 @@
+import pytest
+import pickle
+from okoye import af_transform
+
+@pytest.fixture()
+def messages():
+    with open('message.pickle', 'rb') as msgf:
+        msgs = pickle.load(msgf)
+    return msgs
+
+def test_sell(messages):
+    """Test Sell"""
+    message = """EURNZD SELL 1.67120
+TP 1.66000 | SL 1.67800
+(Note: Last Entry Hit Breakeven)
+"""
+    replied = messages[6]
+    result = af_transform.transform(message, replied['date'])
+
+    assert result['actions'][0]['result_str'] == '$EURNZD#OP_SELL@1.67120SL1.67800TP1.66000ID13.04.2019.10:26\n'
+
+def test_ch_be(messages):
+    """Test Close Half and Breakeven"""
+    reply_message = "30+ Pips Running ✅✅ Close Half & Set BE."
+    replied = messages[6]
+
+    result = af_transform.reply_transform(reply_message, replied)
+    assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEHALFID13.04.2019.10:26\n'
+    assert result['actions'][1]['result_str'] == '$EURNZD#MODIFYSL1.67120ID13.04.2019.10:26\n'
+
+def test_ch_ss(messages):
+    """Test Close Half and Set SL"""
+    reply_message = "25+ Pips Running ✅✅ Close Half & Set 79.480"
+
+    replied = messages[6]
+
+    result = af_transform.reply_transform(reply_message, replied)
+    print(result)
+    assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEHALFID13.04.2019.10:26\n'
+    assert result['actions'][1]['result_str'] == '$EURNZD#MODIFYSL79.480ID13.04.2019.10:26\n'
+
+def test_ch_ss2(messages):
+    """Test Close Half and Set SL 2"""
+    reply_message = "32+ Pips Running ✅✅ Close Half & Set SL 1.67100"
+    replied = messages[6]
+
+    result = af_transform.reply_transform(reply_message, replied)
+    print(result)
+    assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEHALFID13.04.2019.10:26\n'
+    assert result['actions'][1]['result_str'] == '$EURNZD#MODIFYSL1.67100ID13.04.2019.10:26\n'

@@ -6,6 +6,9 @@ from langdetect import detect, lang_detect_exception
 import re
 from datetime import datetime
 import pickle
+
+from okoye import af_transform
+
 import logging
 logging.basicConfig(level=logging.INFO)
 # logging.debug('dbg')
@@ -69,49 +72,6 @@ def filter_in(message):
     is_filtered_in = reduce(lambda x, y: y if y else x, results)
 
     return is_filtered_in
-
-
-def af_transform(msg, timestamp):
-    cmd = re.compile(r'^([A-Z]*) ((BUY|SELL) ?(LIMIT|STOP)?) ([\w\.]*)', re.MULTILINE)
-    cmt = cmd.search(msg)
-    # print(cmt.group(3))
-    if not cmt:
-        return None
-    if cmt.group(2) in ['BUY', 'SELL']:
-        op = 'OP_' + cmt.group(2)
-    else:
-        op = cmt.group(2).replace(' ', '')
-    
-    tpsl = re.compile(r'^TP ([\w\.]*) \| SL ([\w\.]*)', re.MULTILINE)
-    tmt = tpsl.search(msg)
-    # print(tmt.group(1), tmt.group(2))
-    if not tmt:
-        return None
-    
-    # print(timestamp.strftime('%d.%m.%Y.%H:%M'))
-    result = '${}#{}@{}SL{}TP{}ID{}\n'.format(
-        cmt.group(1),
-        op,
-        cmt.group(3),
-        tmt.group(2),
-        tmt.group(1),
-        timestamp.strftime('%d.%m.%Y.%H:%M')
-    )
-    actions = []
-    action_dict = {
-        'result_str': result,
-        'op': op,
-        'open': cmt.group(3),
-        'sl': tmt.group(2),
-        'tp': tmt.group(1),
-    }
-    actions.append(action_dict)
-    res_dict = {
-        'pair': cmt.group(1),
-        'id': timestamp.strftime('%d.%m.%Y.%H:%M'),
-        'actions': actions
-    }
-    return res_dict
 
 
 def main():
@@ -228,16 +188,33 @@ def main():
                         # afinito
                         af_res = None
                         if replied:
-                            af_res = af_reply_transform(message_string, replied)
+                            af_res = af_transform.reply_transform(message_string, replied)
                         else:
-                            af_res = af_transform(message_string, update.message.date)
-                        
+                            af_res = af_transform.transform(message_string, update.message.date)
+
                         if af_res:
                             with open('afinito.txt', 'a') as af:
                                 for action in af_res['actions']:
                                     af.write(action.result_str)
-                                    
+
                                 msg_obj = af_res
+                        else:
+                            print('Error parsing\n{}'.format(message_string))
+
+                    elif update.message.to_id.channel_id == channel_ids[3]:
+                        # okoye_private
+                        ok_res = None
+                        if replied:
+                            ok_res = af_transform.reply_transform(message_string, replied)
+                        else:
+                            ok_res = af_transform.transform(message_string, update.message.date)
+
+                        if ok_res:
+                            with open('okoye.txt', 'a') as okf:
+                                for action in af_res['actions']:
+                                    okf.write(action.result_str)
+
+                                msg_obj = ok_res
                         else:
                             print('Error parsing\n{}'.format(message_string))
 
@@ -275,7 +252,7 @@ def main():
             return
 
         print('(Press Ctrl+C to stop this)')
-        await client.run_until_disconnected()
+        client.run_until_disconnected()
 
 if __name__ == '__main__':
     main()
