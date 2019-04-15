@@ -47,8 +47,19 @@ def transform(msg, timestamp):
 def reply_transform(msg_string, replied):
     actions = []
 
+    # CLOSEFULL
+    cfre = re.compile(r'close(d)? *full', re.IGNORECASE | re.MULTILINE)
+    cfmo = cfre.search(msg_string)
+    if cfmo:
+        result_str = '${}#CLOSEFULLID{}\n'.format(replied.get('pair', ''), replied.get('id', ''))
+        action = {
+            'result_str': result_str,
+            'op': 'CLOSEFULL'
+        }
+        actions.append(action)
+
     # CLOSEHALF
-    chre = re.compile(r'(close *half)', re.IGNORECASE | re.MULTILINE)
+    chre = re.compile(r'close(d)? *half', re.IGNORECASE | re.MULTILINE)
     chmo = chre.search(msg_string)
     if chmo:
         result_str = '${}#CLOSEHALFID{}\n'.format(replied.get('pair', ''), replied.get('id', ''))
@@ -81,12 +92,12 @@ def reply_transform(msg_string, replied):
         actions.append(action)
 
     # SET SL
-    ssre = re.compile(r'set *(sl)? *([\w\.]*)', re.IGNORECASE | re.MULTILINE)
+    ssre = re.compile(r'((set|move|shift|sl) +)+([\w\.]*)', re.IGNORECASE | re.MULTILINE)
     ssmo = ssre.search(msg_string)
 
     if ssmo:
         print(ssmo.groups())
-        new_sl = ssmo.group(2)
+        new_sl = ssmo.group(3)
 
         result_str = '${}#MODIFYSL{}ID{}\n'.format(replied.get('pair', ''), new_sl, replied.get('id', ''))
         action = {

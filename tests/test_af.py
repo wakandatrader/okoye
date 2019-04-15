@@ -48,3 +48,30 @@ def test_ch_ss2(messages):
     print(result)
     assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEHALFID13.04.2019.10:26\n'
     assert result['actions'][1]['result_str'] == '$EURNZD#MODIFYSL1.67100ID13.04.2019.10:26\n'
+
+def test_ss(messages):
+    """Test Set SL"""
+    reply_message = "EURNZD SHIFT SL 1.56500"
+    replied = messages[6]
+
+    result = af_transform.reply_transform(reply_message, replied)
+    print(result)
+    assert result['actions'][0]['result_str'] == '$EURNZD#MODIFYSL1.56500ID13.04.2019.10:26\n'
+
+def test_cf(messages):
+    """Test Close Full"""
+    reply_message = "60+ Pips Close Full ✅✅"
+    replied = messages[6]
+
+    result = af_transform.reply_transform(reply_message, replied)
+    print(result)
+    assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEFULLID13.04.2019.10:26\n'
+
+def test_cf2(messages):
+    """Test Close Full 2"""
+    reply_message = "60+ Pips Closed Full ✅✅"
+    replied = messages[6]
+
+    result = af_transform.reply_transform(reply_message, replied)
+    print(result)
+    assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEFULLID13.04.2019.10:26\n'

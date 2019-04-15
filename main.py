@@ -195,7 +195,7 @@ def main():
                         if af_res:
                             with open('afinito.txt', 'a') as af:
                                 for action in af_res['actions']:
-                                    af.write(action.result_str)
+                                    af.write(action['result_str'])
 
                                 msg_obj = af_res
                         else:
@@ -211,8 +211,8 @@ def main():
 
                         if ok_res:
                             with open('okoye.txt', 'a') as okf:
-                                for action in af_res['actions']:
-                                    okf.write(action.result_str)
+                                for action in ok_res['actions']:
+                                    okf.write(action['result_str'])
 
                                 msg_obj = ok_res
                         else:
