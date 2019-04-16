@@ -18,6 +18,7 @@ TP 1.66000 | SL 1.67800
     result = af_transform.transform(message, replied['date'])
 
     assert result['actions'][0]['result_str'] == '$EURNZD#OP_SELL@1.67120SL1.67800TP1.66000ID13.04.2019.10:26\n'
+    assert len(result['actions']) == 1
 
 def test_ch_be(messages):
     """Test Close Half and Breakeven"""
@@ -27,6 +28,17 @@ def test_ch_be(messages):
     result = af_transform.reply_transform(reply_message, replied)
     assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEHALFID13.04.2019.10:26\n'
     assert result['actions'][1]['result_str'] == '$EURNZD#MODIFYSL1.67120ID13.04.2019.10:26\n'
+    assert len(result['actions']) == 2
+
+def test_ch_be2(messages):
+    """Test Close Half and Breakeven 2"""
+    reply_message = "42+ Pips Profit ✅✅ Set Breakeven & Close Half.."
+    replied = messages[6]
+
+    result = af_transform.reply_transform(reply_message, replied)
+    assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEHALFID13.04.2019.10:26\n'
+    assert result['actions'][1]['result_str'] == '$EURNZD#MODIFYSL1.67120ID13.04.2019.10:26\n'
+    assert len(result['actions']) == 2
 
 def test_ch_ss(messages):
     """Test Close Half and Set SL"""
@@ -38,6 +50,7 @@ def test_ch_ss(messages):
     print(result)
     assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEHALFID13.04.2019.10:26\n'
     assert result['actions'][1]['result_str'] == '$EURNZD#MODIFYSL79.480ID13.04.2019.10:26\n'
+    assert len(result['actions']) == 2
 
 def test_ch_ss2(messages):
     """Test Close Half and Set SL 2"""
@@ -48,6 +61,7 @@ def test_ch_ss2(messages):
     print(result)
     assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEHALFID13.04.2019.10:26\n'
     assert result['actions'][1]['result_str'] == '$EURNZD#MODIFYSL1.67100ID13.04.2019.10:26\n'
+    assert len(result['actions']) == 2
 
 def test_ss(messages):
     """Test Set SL"""
@@ -57,6 +71,7 @@ def test_ss(messages):
     result = af_transform.reply_transform(reply_message, replied)
     print(result)
     assert result['actions'][0]['result_str'] == '$EURNZD#MODIFYSL1.56500ID13.04.2019.10:26\n'
+    assert len(result['actions']) == 1
 
 def test_cf(messages):
     """Test Close Full"""
@@ -66,6 +81,7 @@ def test_cf(messages):
     result = af_transform.reply_transform(reply_message, replied)
     print(result)
     assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEFULLID13.04.2019.10:26\n'
+    assert len(result['actions']) == 1
 
 def test_cf2(messages):
     """Test Close Full 2"""
@@ -75,3 +91,4 @@ def test_cf2(messages):
     result = af_transform.reply_transform(reply_message, replied)
     print(result)
     assert result['actions'][0]['result_str'] == '$EURNZD#CLOSEFULLID13.04.2019.10:26\n'
+    assert len(result['actions']) == 1

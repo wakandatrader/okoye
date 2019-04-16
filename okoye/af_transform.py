@@ -3,7 +3,7 @@ from datetime import datetime
 import pickle
 
 def transform(msg, timestamp):
-    cmd = re.compile(r'^([A-Z]*) ((BUY|SELL) ?(LIMIT|STOP)?) ([\w\.]*)', re.MULTILINE)
+    cmd = re.compile(r'^([A-Z]*) ((BUY|SELL) ?(LIMIT|STOP)?) (\d+\.?\d*)', re.MULTILINE)
     cmt = cmd.search(msg)
     # print(cmt.group(3))
     if not cmt:
@@ -13,7 +13,7 @@ def transform(msg, timestamp):
     else:
         op = cmt.group(2).replace(' ', '')
 
-    tpsl = re.compile(r'^TP ([\w\.]*) \| SL ([\w\.]*)', re.MULTILINE)
+    tpsl = re.compile(r'^TP (\d+\.?\d*) \| SL (\d+\.?\d*)', re.MULTILINE)
     tmt = tpsl.search(msg)
     # print(tmt.group(1), tmt.group(2))
     if not tmt:
@@ -92,11 +92,11 @@ def reply_transform(msg_string, replied):
         actions.append(action)
 
     # SET SL
-    ssre = re.compile(r'((set|move|shift|sl) +)+([\w\.]*)', re.IGNORECASE | re.MULTILINE)
+    ssre = re.compile(r'((set|move|shift|sl) +)+(\d+\.?\d*)', re.IGNORECASE | re.MULTILINE)
     ssmo = ssre.search(msg_string)
 
     if ssmo:
-        print(ssmo.groups())
+        print(ssmo.group(2))
         new_sl = ssmo.group(3)
 
         result_str = '${}#MODIFYSL{}ID{}\n'.format(replied.get('pair', ''), new_sl, replied.get('id', ''))
