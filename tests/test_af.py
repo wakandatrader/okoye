@@ -20,6 +20,17 @@ TP 1.66000 | SL 1.67800
     assert result['actions'][0]['result_str'] == '$EURNZD#OP_SELL@1.67120SL1.67800TP1.66000ID13.04.2019.10:26\n'
     assert len(result['actions']) == 1
 
+def test_buy(messages):
+    """Test Buy"""
+    message = "EURUSD BUY 1.12525 (fake)"
+
+    replied = messages[6]
+    result = af_transform.transform(message, replied['date'])
+
+    assert len(result['actions']) == 1
+    assert result['actions'][0]['result_str'] == '$EURUSD#OP_BUY@1.12525ID13.04.2019.10:26\n'
+
+
 def test_ch_be(messages):
     """Test Close Half and Breakeven"""
     reply_message = "30+ Pips Running ✅✅ Close Half & Set BE."

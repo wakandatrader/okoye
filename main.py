@@ -101,12 +101,15 @@ def main():
         source_channels = channels['source']
 
         def get_entity_id(url):
+            print(url)
             channel = client.get_entity(url)
             return channel.id
 
         channel_ids = list(map(get_entity_id, source_channels))
+        vip_ids = [channel_ids[0], channel_ids[2]]
 
-        target_channel = client.get_entity(channels['target'])
+        target_channel_ids = channels['target']
+        target_channels = list(map(client.get_entity, target_channel_ids))
 
         if channels['reject']:
             reject_channel = client.get_entity(channels['reject'])
@@ -114,8 +117,6 @@ def main():
             reject_channel = None
 
         print(channel_ids)
-
-        print(target_channel.id)
 
         @client.on(events.NewMessage(chats=channel_ids))
         async def new_message_handler(update):
@@ -141,6 +142,11 @@ def main():
             if channel:
                 print(channel.title)
             # filtered = filter_out(message_string)
+            if channel and channel.channel_id in vip_ids:
+                target_channel = target_channels[1]
+            else:
+                target_channel = target_channels[0]
+            print(target_channel.id)
 
             filtered = False
 

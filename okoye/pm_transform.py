@@ -3,7 +3,7 @@ from datetime import datetime
 import pickle
 
 def transform(msg, timestamp):
-    cmd = re.compile(r'^([A-Z]*) ((BUY|SELL) ?(LIMIT|STOP)?) (\d+\.?\d*)', re.MULTILINE)
+    cmd = re.compile(r'^([A-Z]*) ((BUY|SELL) ?(LIMIT|STOP)?) (\d+\.?\d*)', re.IGNORECASE | re.MULTILINE)
     cmt = cmd.search(msg)
     # print(cmt.group(3))
     if not cmt:
@@ -13,13 +13,11 @@ def transform(msg, timestamp):
     else:
         op = cmt.group(2).replace(' ', '')
 
-    tpsl = re.compile(r'^TP +(\d+\.?\d*) \| SL +(\d+\.?\d*)', re.MULTILINE)
+    tpsl = re.compile(r'^TP (\d+\.?\d*) \| SL (\d+\.?\d*)', re.MULTILINE)
     tmt = tpsl.search(msg)
     # print(tmt.group(1), tmt.group(2))
-    if tmt:
-        template = '${}#{}@{}SL{}TP{}ID{}\n'
-    else:
-        template = '${}#{}@{}{}ID{}\n'
+    if not tmt:
+        return None
 
     # print(timestamp.strftime('%d.%m.%Y.%H:%M'))
     result = '${}#{}@{}SL{}TP{}ID{}\n'.format(
@@ -115,21 +113,3 @@ def reply_transform(msg_string, replied):
         'actions': actions
     }
     return result_dict
-
-if __name__ == '__main__':
-    message = """EURNZD SELL 1.67120
-TP 1.66000 | SL 1.67800
-(Note: Last Entry Hit Breakeven)
-"""
-
-    reply_message = "30+ Pips Running ✅✅ Close Half & Set BE."
-
-    with open('message.pickle', 'rb') as msgf:
-        messages = pickle.load(msgf)
-        print(messages)
-        print(len(messages))
-
-    replied = messages[6]
-    print(replied)
-
-    print(reply_transform(reply_message, replied))
