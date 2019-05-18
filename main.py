@@ -7,7 +7,7 @@ import re
 from datetime import datetime
 import pickle
 
-from okoye import af_transform
+from okoye import af_transform, pm_transform
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -142,7 +142,7 @@ def main():
             if channel:
                 print(channel.title)
             # filtered = filter_out(message_string)
-            if channel and channel.channel_id in vip_ids:
+            if channel and channel.id in vip_ids:
                 target_channel = target_channels[1]
             else:
                 target_channel = target_channels[0]
@@ -204,6 +204,23 @@ def main():
                                     af.write(action['result_str'])
 
                                 msg_obj = af_res
+                        else:
+                            print('Error parsing\n{}'.format(message_string))
+
+                    elif update.message.to_id.channel_id == channel_ids[2]:
+                        # pips maker
+                        pm_res = None
+                        if replied:
+                            pm_res = pm_transform.reply_transform(message_string, replied)
+                        else:
+                            pm_res = pm_transform.transform(message_string, update.message.date)
+
+                        if pm_res:
+                            with open('pipsmaker.txt', 'a') as pm:
+                                for action in pm_res['actions']:
+                                    pm.write(action['result_str'])
+
+                                msg_obj = pm_res
                         else:
                             print('Error parsing\n{}'.format(message_string))
 

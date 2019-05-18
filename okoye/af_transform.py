@@ -16,28 +16,40 @@ def transform(msg, timestamp):
     tpsl = re.compile(r'^TP +(\d+\.?\d*) \| SL +(\d+\.?\d*)', re.MULTILINE)
     tmt = tpsl.search(msg)
     # print(tmt.group(1), tmt.group(2))
+
+    actions = []
     if tmt:
         template = '${}#{}@{}SL{}TP{}ID{}\n'
+        result = template.format(
+            cmt.group(1),
+            op,
+            cmt.group(5),
+            tmt.group(2),
+            tmt.group(1),
+            timestamp.strftime('%d.%m.%Y.%H:%M')
+        )
+        action_dict = {
+            'result_str': result,
+            'op': op,
+            'open': cmt.group(5),
+            'sl': tmt.group(2),
+            'tp': tmt.group(1),
+        }
     else:
-        template = '${}#{}@{}{}ID{}\n'
+        template = '${}#{}@{}ID{}\n'
+        result = template.format(
+            cmt.group(1),
+            op,
+            cmt.group(5),
+            timestamp.strftime('%d.%m.%Y.%H:%M')
+        )
+        action_dict = {
+            'result_str': result,
+            'op': op,
+            'open': cmt.group(5),
+        }
 
-    # print(timestamp.strftime('%d.%m.%Y.%H:%M'))
-    result = '${}#{}@{}SL{}TP{}ID{}\n'.format(
-        cmt.group(1),
-        op,
-        cmt.group(5),
-        tmt.group(2),
-        tmt.group(1),
-        timestamp.strftime('%d.%m.%Y.%H:%M')
-    )
-    actions = []
-    action_dict = {
-        'result_str': result,
-        'op': op,
-        'open': cmt.group(5),
-        'sl': tmt.group(2),
-        'tp': tmt.group(1),
-    }
+
     actions.append(action_dict)
     res_dict = {
         'pair': cmt.group(1),

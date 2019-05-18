@@ -3,43 +3,62 @@ from datetime import datetime
 import pickle
 
 def transform(msg, timestamp):
-    cmd = re.compile(r'^([A-Z]*) ((BUY|SELL) ?(LIMIT|STOP)?) (\d+\.?\d*)', re.IGNORECASE | re.MULTILINE)
+    cmd = re.compile(r'^([A-Z]{6} ).*((BUY|SELL) ?(LIMIT|STOP)?)\D*(\d+\.?\d*)', re.IGNORECASE | re.MULTILINE)
     cmt = cmd.search(msg)
-    # print(cmt.group(3))
+
     if not cmt:
         return None
-    if cmt.group(2) in ['BUY', 'SELL']:
-        op = 'OP_' + cmt.group(2)
+
+    # header
+    pair = cmt.group(1).strip().upper()
+    optext = cmt.group(2).strip().upper()
+    if optext in ['BUY', 'SELL']:
+        op = 'OP_' + optext
     else:
-        op = cmt.group(2).replace(' ', '')
+        op = optext.replace(' ', '')
+    price = cmt.group(5)
+    header = '${}#{}@{}'.format(pair, op, price)
 
-    tpsl = re.compile(r'^TP (\d+\.?\d*) \| SL (\d+\.?\d*)', re.MULTILINE)
-    tmt = tpsl.search(msg)
-    # print(tmt.group(1), tmt.group(2))
-    if not tmt:
-        return None
+    # footer
+    idstr = timestamp.strftime('%d.%m.%Y.%H:%M')
+    footer = 'ID{}\n'.format(idstr)
 
-    # print(timestamp.strftime('%d.%m.%Y.%H:%M'))
-    result = '${}#{}@{}SL{}TP{}ID{}\n'.format(
-        cmt.group(1),
-        op,
-        cmt.group(5),
-        tmt.group(2),
-        tmt.group(1),
-        timestamp.strftime('%d.%m.%Y.%H:%M')
-    )
+    #tp
+    tpp = re.compile(r'TP (\d+\.?\d*)', re.IGNORECASE)
+    tpt = tpp.search(msg)
+    if tpt:
+        tp = tpt.group(1)
+        tpstr = 'TP{}'.format(tp)
+    else:
+        tp = None
+        tpstr = ''
+
+    # sl
+    slp = re.compile(r'SL (\d+\.?\d*)', re.IGNORECASE)
+    slt = slp.search(msg)
+    if slt:
+        sl = slt.group(1)
+        slstr = 'SL{}'.format(sl)
+    else:
+        sl = None
+        slstr = ''
+
+    # result
+    result = header + slstr + tpstr + footer
+
     actions = []
     action_dict = {
         'result_str': result,
         'op': op,
-        'open': cmt.group(5),
-        'sl': tmt.group(2),
-        'tp': tmt.group(1),
+        'open': price,
+        'sl': sl,
+        'tp': tp,
     }
+
     actions.append(action_dict)
     res_dict = {
-        'pair': cmt.group(1),
-        'id': timestamp.strftime('%d.%m.%Y.%H:%M'),
+        'pair': pair,
+        'id': idstr,
         'actions': actions
     }
     return res_dict
@@ -70,7 +89,7 @@ def reply_transform(msg_string, replied):
         actions.append(action)
 
     # BREAKEVEN
-    bere = re.compile(r'(set *(breakeven|be))', re.IGNORECASE | re.MULTILINE)
+    bere = re.compile(r'(breakeven| be )', re.IGNORECASE | re.MULTILINE)
     bemo = bere.search(msg_string)
 
     if bemo:
