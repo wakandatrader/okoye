@@ -18,4 +18,11 @@ Telegram Channel Autoforwarder
  7. Go to the okoye-master folder in the Powershell with `cd .\okoye-master`
  8. Install dependencies with `pipenv install`
  9. Go to pipenv shell with `pipenv shell`
- 
+10. Setup environment variables:
+    ```
+    $env:TG_SESSION="okoye"
+    $env:TG_API_HASH="190e67efb52a447b796f25a710921b4f"
+    $env:TG_API_ID=267159
+    $env:TG_PHONE="+628xxxx"
+    ```
+    Replace the `TG_PHONE` number with your phone number
