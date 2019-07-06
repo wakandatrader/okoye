@@ -93,10 +93,14 @@ def main():
     else:
         client.start()
 
+    # whether the auto forward use filtering
+    is_filtering = environ.get('FILTERING', None)
+
     print(channels)
     source_channels = channels['source']
 
     def get_entity_id(url):
+        print(url)
         channel = client.get_entity(url)
         return channel.id
 
@@ -119,7 +123,12 @@ def main():
         print(update.stringify())
         message_string = update.message.message
         print('main message: {}'.format(message_string))
-        filtered = filter_out(message_string)
+
+        if is_filtering:
+            filtered = filter_out(message_string)
+        else:
+            filtered = False
+
         if filtered:
             print('filtered: {}'.format(filtered))
             if reject_channel:
@@ -133,7 +142,11 @@ def main():
 
             return
 
-        forward = filter_in(message_string)
+        if is_filtering:
+            forward = filter_in(message_string)
+        else:
+            forward = True
+
         if forward:
             client.forward_messages(target_channel, update.message)
             # client.send_message(target_channel, 'DEBUG: panjang pesan: {}'.format(len(message_string)))
