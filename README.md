@@ -26,6 +26,11 @@ Telegram Channel Autoforwarder
     $env:TG_PHONE="+628xxxx"
     ```
     Replace the `TG_PHONE` number with your phone number
+11. Execute the program:
+    ```
+    python main.py
+    ```
+12. Terminate the application with `Ctrl-C`.
 
 ## Ubuntu Linux Installation Notes
 
